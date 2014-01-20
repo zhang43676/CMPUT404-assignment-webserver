@@ -1,4 +1,4 @@
-import SocketServer
+import SocketServer, os
 # coding: utf-8
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
@@ -31,8 +31,42 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall("OK")
+        new_request = self.data.split()
+        url = new_request[1]
+        #denfense the hack!
+        if "../" in url:
+            self.request.sendall("HTTP/1.1 404 Bad Request\n")
+            return
+        #check the url
+        if url == '/':
+            new_file = os.getcwd() + "/www/index.html"    
+        elif url[0] == '/' and url[-1] == '/':
+            new_file = os.getcwd() + "/www" + url + "index.html"
+        else:
+            new_file = os.getcwd() + "/www" + url
+        local_path = os.path.normpath(new_file)
+        #get the content of page
+        try:
+            read_file = open(local_path, "r")
+            content_type = new_file.split(".")[-1]
+        #make a header
+            http_header = "HTTP/1.1 200 OK\r\n" + "Content-Type: text/" + content_type + "; charset=UTF-8\r\n"
+        #make the body
+            http_content = read_file.read()
+            http_content_len = "The length of content:" +str(len(http_content)) + "\n"
+            read_file.close()
+        #if path is invalid, return 404 not found
+        except IOError:
+            http_header = "HTTP/1.1 404 Not Found\n"
+            http_content = "\n"
+            http_content_len = "The length of content: 0 \n"
+        #send the request
+        self.request.sendall(http_header)
+        self.request.sendall("\r\n")
+        self.request.sendall(http_content+http_content_len)
+                
+        
+        
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
