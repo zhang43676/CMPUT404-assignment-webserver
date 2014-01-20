@@ -53,13 +53,13 @@ class MyWebServer(SocketServer.BaseRequestHandler):
             http_header = "HTTP/1.1 200 OK\r\n" + "Content-Type: text/" + content_type + "; charset=UTF-8\r\n"
         #make the body
             http_content = read_file.read()
-            http_content_len = "The length of content:" +str(len(http_content)) + "\n"
+            http_content_len = "Content-Length:" +str(len(http_content)) + "\n"
             read_file.close()
         #if path is invalid, return 404 not found
         except IOError:
             http_header = "HTTP/1.1 404 Not Found\n"
             http_content = "\n"
-            http_content_len = "The length of content: 0 \n"
+            http_content_len = "Content-Length: 0 \n"
         #send the request
         self.request.sendall(http_header)
         self.request.sendall("\r\n")
